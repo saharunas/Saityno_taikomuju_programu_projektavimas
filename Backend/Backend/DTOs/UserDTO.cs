@@ -1,0 +1,17 @@
+﻿namespace Backend.Entities
+{
+    public class UserRegisterDTO
+    {
+        public string name { get; set; } = null!;
+        public string surname { get; set; } = null!;
+        public string username { get; set; } = null!;
+        public string email { get; set; } = null!;
+        public string password { get; set; } = null!;
+        public long role_id { get; set; }
+    }
+    public class UserLoginDTO
+    {
+        public string username { get; set; } = null!;
+        public string password { get; set; } = null!;
+    }
+}
