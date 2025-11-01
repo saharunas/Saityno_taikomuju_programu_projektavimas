@@ -20,7 +20,7 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
-        [HttpGet("list/{comm_id}")]
+        [HttpGet("community/{comm_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetCommunityPosts(long comm_id)
         {
             var postList = await _context.Post.Where(p => p.CommunityId == comm_id).ToListAsync();

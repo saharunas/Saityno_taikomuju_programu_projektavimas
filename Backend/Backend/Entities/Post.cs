@@ -10,7 +10,8 @@ namespace Backend.Entities
         public string Text { get; set; } = "";
         public DateTime CreationDate { get; set; }
 
-        public long UserId { get; set; }
+        [Required]
+        public required long UserId { get; set; }
         public User User { get; set; } = null!;
 
         public long CommunityId { get; set; }

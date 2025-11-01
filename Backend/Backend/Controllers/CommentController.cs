@@ -20,7 +20,7 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
-        [HttpGet("list/{post_id}")]
+        [HttpGet("post/{post_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetPostCommentList(long post_id)
         {
             var commentList = await _context.Comment.Where(p => p.PostId == post_id).ToListAsync();

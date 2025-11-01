@@ -87,13 +87,13 @@ namespace Backend.Services
 
         public async Task<bool> UserExists(string username, string email)
         {
-            return await _context.App_User.AnyAsync(u => u.Username == username || u.Email == email);
+            return await _context.App_User.AnyAsync(u => u.UserName == username || u.Email == email);
         }
         public bool ValidateUserDTO(UserRegisterDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.name) || string.IsNullOrWhiteSpace(dto.surname) ||
                 string.IsNullOrWhiteSpace(dto.username) || string.IsNullOrWhiteSpace(dto.email) ||
-                string.IsNullOrWhiteSpace(dto.password) || dto.role_id <= 0 || dto.role_id > 3)
+                string.IsNullOrWhiteSpace(dto.password))
             {
                 return false;
             }
@@ -111,7 +111,7 @@ namespace Backend.Services
         public async Task<bool> ValidateLogin(UserLoginDTO dto)
         {
             var user = await _context.App_User
-                .FirstOrDefaultAsync(u => u.Username == dto.username && u.Password == dto.password);
+                .FirstOrDefaultAsync(u => u.UserName == dto.username); //TODO password check
             if (user == null)
             {
                 return false;

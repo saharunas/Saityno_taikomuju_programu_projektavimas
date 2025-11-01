@@ -10,8 +10,8 @@ namespace Backend.Entities
         public DateTime CreationDate { get; set; }
         public string Description { get; set; } = "";
 
-        // FK to User (creator/owner)
-        public long UserId { get; set; }
+        [Required]
+        public required long UserId { get; set; }
         public User User { get; set; } = null!;
 
         public ICollection<Post> Posts { get; set; } = new List<Post>();

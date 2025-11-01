@@ -21,7 +21,7 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
-        [HttpGet("list")]
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Community>>> GetCommunities()
         {
             var communityList = await _context.Community.ToListAsync();
@@ -117,7 +117,8 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-        [HttpGet("commentsList/{community_id}")]
+
+        [HttpGet("{community_id}/posts/comments")]
         public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsByCommunityId(long community_id)
         {
             var posts = await _context.Post.Where(p => p.CommunityId == community_id)

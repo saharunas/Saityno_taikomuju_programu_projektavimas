@@ -10,7 +10,8 @@ namespace Backend.Entities
         public DateTime CreationDate { get; set; }
         public DateTime? EditedDate { get; set; }
 
-        public long UserId { get; set; }
+        [Required]
+        public required long UserId { get; set; }
         public User User { get; set; } = null!;
 
         public long PostId { get; set; }
