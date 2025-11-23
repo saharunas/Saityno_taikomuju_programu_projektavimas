@@ -17,6 +17,23 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:8081",
+                    "http://localhost:19006",
+                    "http://127.0.0.1:8081"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddScoped<ValidationService>();
 builder.Services.AddScoped<IdentitySeeder>();
 builder.Services.AddScoped<SessionService>();
@@ -65,6 +82,7 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 app.UseResponseCaching();
+app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
 app.Run();
