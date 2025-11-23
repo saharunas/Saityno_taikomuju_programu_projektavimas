@@ -20,7 +20,7 @@ namespace Backend.Services
         }
         public bool ValidateCommentDTO(CommentCreateDTO dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.text) || dto.post_id <= 0 || dto.user_id <= 0)
+            if (dto == null || string.IsNullOrWhiteSpace(dto.text) || dto.post_id <= 0)
             {
                 return false;
             }
@@ -42,7 +42,7 @@ namespace Backend.Services
         }
         public bool ValidatePostDTO(PostCreateDTO dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.title) || string.IsNullOrWhiteSpace(dto.text) || dto.user_id <= 0 || dto.community_id <= 0)
+            if (dto == null || string.IsNullOrWhiteSpace(dto.title) || string.IsNullOrWhiteSpace(dto.text) || dto.community_id <= 0)
             {
                 return false;
             }
@@ -62,15 +62,7 @@ namespace Backend.Services
         {
             return await _context.Community.AnyAsync(c => c.Id == communityId);
         }
-        public bool ValidateCommunityDTO(CommunityCreateDTO dto)
-        {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.name) || string.IsNullOrWhiteSpace(dto.description) || dto.user_id <= 0)
-            {
-                return false;
-            }
-            return true;
-        }
-        public bool ValidateCommunityDTO(CommunityUpdateDTO dto)
+        public bool ValidateCommunityDTO(CommunityDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.name) || string.IsNullOrWhiteSpace(dto.description))
             {

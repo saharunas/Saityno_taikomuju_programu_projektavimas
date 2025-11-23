@@ -11,6 +11,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     public DbSet<Community> Community { get; set; }
     public DbSet<Post> Post { get; set; }
     public DbSet<Comment> Comment { get; set; }
+    public DbSet<Session> Sessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Backend.Controllers
 {
@@ -20,6 +22,7 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpGet("post/{post_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetPostCommentList(long post_id)
         {
@@ -31,6 +34,7 @@ namespace Backend.Controllers
             return Ok(commentList);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Post>> GetComment(long id)
         {
@@ -42,6 +46,7 @@ namespace Backend.Controllers
             return Ok(comment);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateComment([FromBody] CommentCreateDTO dto)
         {
@@ -59,15 +64,10 @@ namespace Backend.Controllers
                 return NotFound($"Post with ID {dto.post_id} not found.");
             }
 
-            if (!await _validationService.UserExists(dto.user_id))
-            {
-                return NotFound($"User with ID {dto.user_id} not found.");
-            }
-
             Comment comment = new Comment
             {
                 Text = dto.text,
-                UserId = dto.user_id,
+                UserId = long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)),
                 PostId = dto.post_id
             };
 
@@ -79,6 +79,7 @@ namespace Backend.Controllers
             return StatusCode(201);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateComment([FromBody] CommentUpdateDTO dto, long id)
         {
@@ -100,7 +101,12 @@ namespace Backend.Controllers
             if (comment == null)
             {
                 return NotFound($"Comment with ID {id} not found.");
-            }            
+            }    
+            
+            if (!HttpContext.User.IsInRole("Admin") && long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)) != comment.UserId)
+            {
+               return Forbid();
+            }
 
             comment.Text = dto.text;
             comment.EditedDate = DateTime.UtcNow;
@@ -111,11 +117,17 @@ namespace Backend.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
             var entity = await _context.Comment.FindAsync(id);
             if (entity == null) return NotFound();
+
+            if (!HttpContext.User.IsInRole("Admin") && long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)) != entity.UserId)
+            {
+               return Forbid();
+            }
 
             _context.Comment.Remove(entity);
             await _context.SaveChangesAsync();

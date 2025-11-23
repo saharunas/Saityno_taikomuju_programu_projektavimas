@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Backend.Controllers
 {
@@ -20,6 +22,7 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpGet("community/{comm_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetCommunityPosts(long comm_id)
         {
@@ -31,6 +34,7 @@ namespace Backend.Controllers
             return Ok(postList);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Post>> GetPost(long id)
         {
@@ -42,6 +46,7 @@ namespace Backend.Controllers
             return Ok(post);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpPost]
         public async Task<IActionResult> CreatePost([FromBody] PostCreateDTO dto)
         {
@@ -54,11 +59,6 @@ namespace Backend.Controllers
                 return UnprocessableEntity("Invalid post data.");
             }
 
-            if (!await _validationService.UserExists(dto.user_id))
-            {
-                return NotFound($"User with ID {dto.user_id} not found.");
-            }
-
             if (!await _validationService.CommunityExists(dto.community_id))
             {
                 return NotFound($"Community with ID {dto.community_id} not found.");
@@ -68,7 +68,7 @@ namespace Backend.Controllers
             {
                 Title = dto.title,
                 Text = dto.text,
-                UserId = dto.user_id,
+                UserId = long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)),
                 CommunityId = dto.community_id
             };
 
@@ -80,6 +80,7 @@ namespace Backend.Controllers
             return CreatedAtAction(nameof(GetPost), new { id = post }, post);
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdatePost([FromBody] PostUpdateDTO dto, long id)
         {
@@ -103,6 +104,11 @@ namespace Backend.Controllers
                 return NotFound($"Community with ID {id} not found.");
             }
 
+            if (!HttpContext.User.IsInRole("Admin") && long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)) != post.UserId)
+            {
+               return Forbid();
+            }
+
             post.Title = dto.title;
             post.Text = dto.text;
 
@@ -112,11 +118,17 @@ namespace Backend.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Member,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
             var entity = await _context.Post.FindAsync(id);
             if (entity == null) return NotFound();
+
+            if (!HttpContext.User.IsInRole("Admin") && long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)) != entity.UserId)
+            {
+               return Forbid();
+            }
 
             _context.Post.Remove(entity);
             await _context.SaveChangesAsync();

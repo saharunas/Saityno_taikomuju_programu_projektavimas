@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ValidationService>();
 builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<SessionService>();
 builder.Services.AddTransient<JwtTokenService>();
 
 builder.Services.AddIdentity<User, IdentityRole<long>>()

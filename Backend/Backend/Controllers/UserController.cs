@@ -16,19 +16,30 @@ namespace Backend.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly JwtTokenService _jwtTokenService;
+        private readonly SessionService _sessionService;
         private readonly ValidationService _validationService;
 
-        public UserController(AppDbContext context, ValidationService validationService)
+        public UserController(
+            AppDbContext context,
+            UserManager<User> userManager,
+            JwtTokenService jwtTokenService,
+            SessionService sessionService,
+            ValidationService validationService)
         {
             _context = context;
+            _userManager = userManager;
+            _jwtTokenService = jwtTokenService;
+            _sessionService = sessionService;
             _validationService = validationService;
         }
 
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser(UserManager<User> userManager, [FromBody] UserRegisterDTO dto)
+        public async Task<IActionResult> registerUser([FromBody] UserRegisterDTO dto)
         {
-            var checkUser = await userManager.FindByNameAsync(dto.username);
+            var checkUser = await _userManager.FindByNameAsync(dto.username);
             if (checkUser != null)
             {
                 return UnprocessableEntity("Username already exists.");
@@ -56,7 +67,7 @@ namespace Backend.Controllers
                 Email = dto.email
             };
 
-            var createdUserResult = await userManager.CreateAsync(user, dto.password);
+            var createdUserResult = await _userManager.CreateAsync(user, dto.password);
             if (!createdUserResult.Succeeded)
             {
                 var errors = createdUserResult.Errors.Select(e => new
@@ -72,7 +83,7 @@ namespace Backend.Controllers
                 });
             }
 
-            var role = await userManager.AddToRoleAsync(user, "Member");
+            var role = await _userManager.AddToRoleAsync(user, "Member");
             if (role == null)
             {
                 return UnprocessableEntity("Assigning role failed.");
@@ -82,9 +93,9 @@ namespace Backend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginUser(UserManager<User> userManager, JwtTokenService jwtTokenService, [FromBody] UserLoginDTO dto)
+        public async Task<IActionResult> loginUser([FromBody] UserLoginDTO dto)
         {
-            var checkUser = await userManager.FindByNameAsync(dto.username);
+            var checkUser = await _userManager.FindByNameAsync(dto.username);
             if (checkUser == null)
             {
                 return UnprocessableEntity("User does not exist.");
@@ -99,7 +110,7 @@ namespace Backend.Controllers
                 return UnprocessableEntity("Invalid user data.");
             }
 
-            var isPasswordValid = await userManager.CheckPasswordAsync(checkUser, dto.password);
+            var isPasswordValid = await _userManager.CheckPasswordAsync(checkUser, dto.password);
             if (!isPasswordValid)
             {
                 return UnprocessableEntity("Incorrect username or password.");
@@ -109,11 +120,14 @@ namespace Backend.Controllers
             //    return NotFound($"User {dto.username} not found.");
             //}
 
-            var roles = await userManager.GetRolesAsync(checkUser);
+            var roles = await _userManager.GetRolesAsync(checkUser);
 
-            var expiresAt = DateTime.Now.AddDays(3);
-            var accessToken = jwtTokenService.createAccessToken(checkUser.UserName, checkUser.Id.ToString(), roles);
-            var refreshToken = jwtTokenService.createRefreshToken(checkUser.Id.ToString(), expiresAt);
+            var sessionId = Guid.NewGuid();
+            var expiresAt = DateTime.UtcNow.AddDays(3);
+            var accessToken = _jwtTokenService.createAccessToken(checkUser.UserName, checkUser.Id.ToString(), roles);
+            var refreshToken = _jwtTokenService.createRefreshToken(sessionId, checkUser.Id, expiresAt);
+
+            await _sessionService.CreateSessionAsync(sessionId, checkUser.Id, refreshToken, expiresAt);
 
             var cookieOptions = new CookieOptions
             {
@@ -129,13 +143,25 @@ namespace Backend.Controllers
         }
 
         [HttpPost("accessToken")]
-        public async Task<ActionResult<string>> getAccessToken(UserManager<User> userManager, JwtTokenService jwtTokenService)
+        public async Task<ActionResult<string>> getAccessToken()
         {
             if (!HttpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
             {
                 return Unauthorized("Refresh token not found.");
             }
-            if (!jwtTokenService.tryParseRefreshToken(refreshToken, out var claims))
+            if (!_jwtTokenService.tryParseRefreshToken(refreshToken, out var claims))
+            {
+                return Unauthorized("Invalid refresh token.");
+            }
+
+            var sessionId = claims.FindFirstValue("SessionId");
+            if (sessionId == null)
+            {
+                return Unauthorized("Invalid refresh token.");
+            }
+
+            var sessionIdAsGuid = Guid.Parse(sessionId);
+            if (!await _sessionService.IsSessionValidAsync(sessionIdAsGuid, refreshToken))
             {
                 return Unauthorized("Invalid refresh token.");
             }
@@ -144,17 +170,17 @@ namespace Backend.Controllers
                       ?? claims.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
                       ?? claims.FindFirst("uid")?.Value;
 
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return UnprocessableEntity("User not found.");
             }
 
-            var roles = await userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            var expiresAt = DateTime.Now.AddDays(3);
-            var accessToken = jwtTokenService.createAccessToken(user.UserName, user.Id.ToString(), roles);
-            var newRefreshToken = jwtTokenService.createRefreshToken(user.Id.ToString(), expiresAt);
+            var expiresAt = DateTime.UtcNow.AddDays(3);
+            var accessToken = _jwtTokenService.createAccessToken(user.UserName, user.Id.ToString(), roles);
+            var newRefreshToken = _jwtTokenService.createRefreshToken(sessionIdAsGuid ,user.Id, expiresAt);
 
             var cookieOptions = new CookieOptions
             {
@@ -166,10 +192,38 @@ namespace Backend.Controllers
 
             HttpContext.Response.Cookies.Append("RefreshToken", newRefreshToken, cookieOptions);
 
+            await _sessionService.ExtendSessionAsync(sessionIdAsGuid, newRefreshToken, expiresAt);
+
 
             return Ok(new SuccessfulLoginDTO(accessToken));
         }
 
+        [HttpPost("logout")]
+        public async Task<ActionResult<string>> logout()
+        {
+            if (!HttpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
+            {
+                return Unauthorized("Refresh token not found.");
+            }
+            if (!_jwtTokenService.tryParseRefreshToken(refreshToken, out var claims))
+            {
+                return Unauthorized("Invalid refresh token.");
+            }
+
+            var sessionId = claims.FindFirstValue("SessionId");
+            if (sessionId == null)
+            {
+                return Unauthorized("Invalid refresh token.");
+            }
+
+            await _sessionService.InvalidateSessionAsync(Guid.Parse(sessionId));
+
+            HttpContext.Response.Cookies.Delete("RefreshToken");
+
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
         {
@@ -178,20 +232,47 @@ namespace Backend.Controllers
             {
                 return NotFound("No users found.");
             }
-            return Ok(users);
+
+            var userDTOs = users.Select(user => new UserResponseDTO
+            {
+                id = user.Id,
+                name = user.Name,
+                surname = user.Surname,
+                username = user.UserName,
+                email = user.Email
+            }).ToList();
+
+            return Ok(userDTOs);
         }
 
+        [Authorize(Roles = "Member, Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<User>>> GetUser(long id)
         {
-            var users = await _context.App_User.FindAsync(id);
-            if (users == null)
+            var user = await _context.App_User.FindAsync(id);
+            if (user == null)
             {
                 return NotFound($"No user with id {id} found.");
             }
-            return Ok(users);
+
+            if (user.Id.ToString() != HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) && !HttpContext.User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            var userDTO = new UserResponseDTO
+            {
+                id = user.Id,
+                name = user.Name,
+                surname = user.Surname,
+                username = user.UserName,
+                email = user.Email
+            };
+
+            return Ok(userDTO);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("block/{id}")]
         public async Task<IActionResult> BlockUser(long id)
         {

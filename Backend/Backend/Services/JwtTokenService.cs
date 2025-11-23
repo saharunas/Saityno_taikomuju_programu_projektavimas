@@ -40,12 +40,13 @@ namespace Backend.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public string createRefreshToken(string userId, DateTime expires)
+        public string createRefreshToken(Guid sessionId, long userId, DateTime expires)
         {
             var authClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Sub, userId)
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new Claim("SessionId", sessionId.ToString())
             };
 
             var token = new JwtSecurityToken(
