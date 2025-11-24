@@ -132,9 +132,9 @@ namespace Backend.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                SameSite = SameSiteMode.Lax,
-                Expires = expiresAt,
-                Secure = false
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = expiresAt
             };
 
             HttpContext.Response.Cookies.Append("RefreshToken", refreshToken, cookieOptions);
@@ -185,9 +185,9 @@ namespace Backend.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                SameSite = SameSiteMode.Lax,
-                Expires = expiresAt,
-                Secure = false
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = expiresAt
             };
 
             HttpContext.Response.Cookies.Append("RefreshToken", newRefreshToken, cookieOptions);
