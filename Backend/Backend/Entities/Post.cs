@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.Extensions.Hosting;
+using System.ComponentModel.DataAnnotations;
 
 namespace Backend.Entities
 {
@@ -18,5 +19,15 @@ namespace Backend.Entities
         public Community Community { get; set; } = null!;
 
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+        public PostResponseDTO toDto()
+        {
+            return new PostResponseDTO
+            {
+                title = this.Title,
+                text = this.Text,
+                creationDate = this.CreationDate
+            };
+        }
     }
 }

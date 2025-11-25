@@ -31,7 +31,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"No comments found in post with ID {post_id}.");
             }
-            return Ok(commentList);
+
+            var responseDTO = commentList.Select(p => p.toDto()).ToList();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -43,7 +46,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"Comment with ID {id} not found.");
             }
-            return Ok(comment);
+
+            var responseDTO = comment.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -76,7 +82,9 @@ namespace Backend.Controllers
             _context.Comment.Add(comment);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201);
+            var responseDTO = comment.toDto();
+
+            return CreatedAtAction(nameof(GetComment), new { id = comment }, responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -114,7 +122,9 @@ namespace Backend.Controllers
             _context.Comment.Update(comment);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            var responseDTO = comment.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]

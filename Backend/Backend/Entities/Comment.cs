@@ -16,5 +16,15 @@ namespace Backend.Entities
 
         public long PostId { get; set; }
         public Post Post { get; set; } = null!;
+
+        public CommentResponseDTO toDto()
+        {
+            return new CommentResponseDTO
+            {
+                text = this.Text,
+                creationDate = this.CreationDate,
+                editedDate = this.EditedDate
+            };
+        }
     }
 }

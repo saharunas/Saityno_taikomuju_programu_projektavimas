@@ -31,7 +31,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"No posts found in community with ID {comm_id}.");
             }
-            return Ok(postList);
+
+            var responseDTO = postList.Select(p => p.toDto()).ToList();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -43,7 +46,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"Post with ID {id} not found.");
             }
-            return Ok(post);
+
+            var responseDTO = post.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -77,7 +83,9 @@ namespace Backend.Controllers
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPost), new { id = post }, post);
+            var responseDTO = post.toDto();
+
+            return CreatedAtAction(nameof(GetPost), new { id = post }, responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -115,7 +123,9 @@ namespace Backend.Controllers
             _context.Post.Update(post);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            var responseDTO = post.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]

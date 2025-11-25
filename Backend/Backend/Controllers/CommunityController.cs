@@ -32,7 +32,10 @@ namespace Backend.Controllers
             {
                 return NotFound("No communities found.");
             }
-            return Ok(communityList);
+
+            var responseDTO = communityList.Select(c => c.toDto()).ToList();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Guest,Member,Admin")]
@@ -44,7 +47,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"Community with ID {id} not found.");
             }
-            return Ok(community);
+
+            var responseDTO = community.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -72,7 +78,9 @@ namespace Backend.Controllers
             _context.Community.Add(community);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCommunity), new { id = community }, community);
+            var responseDTO = community.toDto();
+
+            return CreatedAtAction(nameof(GetCommunity), new { id = community }, responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]
@@ -110,7 +118,9 @@ namespace Backend.Controllers
             _context.Community.Update(community);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            var responseDTO = community.toDto();
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member,Admin")]

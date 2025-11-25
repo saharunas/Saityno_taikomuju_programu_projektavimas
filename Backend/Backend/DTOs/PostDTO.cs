@@ -12,4 +12,11 @@
         public string title { get; set; } = null!;
         public string text { get; set; } = null!;
     }
+
+    public record PostResponseDTO
+    {
+        public string title { get; set; } = null!;
+        public string text { get; set; } = null!;
+        public DateTime creationDate { get; set; } = DateTime.Now;
+    }
 }

@@ -5,4 +5,11 @@
         public string name { get; set; } = null!;
         public string description { get; set; } = null!;
     }
+
+    public record CommunityResponseDTO
+    {
+        public string name { get; set; } = null!;
+        public string description { get; set; } = null!;
+        public DateTime creationDate { get; set; } = DateTime.Now;
+    }
 }

@@ -15,5 +15,15 @@ namespace Backend.Entities
         public User User { get; set; } = null!;
 
         public ICollection<Post> Posts { get; set; } = new List<Post>();
+
+        public CommunityResponseDTO toDto()
+        {
+            return new CommunityResponseDTO
+            {
+                name = this.Name,
+                description = this.Description,
+                creationDate = this.CreationDate
+            };
+        }
     }
 }

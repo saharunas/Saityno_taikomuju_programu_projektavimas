@@ -14,7 +14,7 @@
         public string password { get; set; } = null!;
     }
 
-    public class UserResponseDTO
+    public record UserResponseDTO
     {
         public long id { get; set; }
         public string name { get; set; } = null!;
