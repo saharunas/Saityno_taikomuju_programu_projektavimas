@@ -8,6 +8,7 @@
 
     public record CommunityResponseDTO
     {
+        public long id { get; set; }
         public string name { get; set; } = null!;
         public string description { get; set; } = null!;
         public DateTime creationDate { get; set; } = DateTime.Now;

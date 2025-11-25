@@ -24,6 +24,7 @@ namespace Backend.Entities
         {
             return new PostResponseDTO
             {
+                id = this.Id,
                 title = this.Title,
                 text = this.Text,
                 creationDate = this.CreationDate

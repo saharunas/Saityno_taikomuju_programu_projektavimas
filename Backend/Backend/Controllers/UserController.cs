@@ -233,16 +233,9 @@ namespace Backend.Controllers
                 return NotFound("No users found.");
             }
 
-            var userDTOs = users.Select(user => new UserResponseDTO
-            {
-                id = user.Id,
-                name = user.Name,
-                surname = user.Surname,
-                username = user.UserName,
-                email = user.Email
-            }).ToList();
+            var responseDTO = users.Select(u => u.toDto()).ToList();
 
-            return Ok(userDTOs);
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Member, Admin")]
@@ -260,16 +253,9 @@ namespace Backend.Controllers
                 return Forbid();
             }
 
-            var userDTO = new UserResponseDTO
-            {
-                id = user.Id,
-                name = user.Name,
-                surname = user.Surname,
-                username = user.UserName,
-                email = user.Email
-            };
+            var responseDTO = user.toDto();
 
-            return Ok(userDTO);
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = "Admin")]

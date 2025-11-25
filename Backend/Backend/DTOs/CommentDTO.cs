@@ -12,6 +12,7 @@
     }
     public record CommentResponseDTO
     {
+        public long id { get; set; }
         public string text { get; set; } = null!;
         public DateTime creationDate { get; set; } = DateTime.Now;
         public DateTime? editedDate { get; set; }

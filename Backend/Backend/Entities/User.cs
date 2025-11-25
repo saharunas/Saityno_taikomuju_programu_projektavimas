@@ -12,5 +12,17 @@ namespace Backend.Entities
         public ICollection<Community> Communities { get; set; } = new List<Community>();
         public ICollection<Post> Posts { get; set; } = new List<Post>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+        public UserResponseDTO toDto()
+        {
+            return new UserResponseDTO
+            {
+                id = this.Id,
+                name = this.Name,
+                surname = this.Surname,
+                username = this.UserName,
+                email = this.Email
+            };
+        }
     }
 }

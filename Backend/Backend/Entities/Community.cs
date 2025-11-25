@@ -20,6 +20,7 @@ namespace Backend.Entities
         {
             return new CommunityResponseDTO
             {
+                id = this.Id,
                 name = this.Name,
                 description = this.Description,
                 creationDate = this.CreationDate

@@ -21,6 +21,7 @@ namespace Backend.Entities
         {
             return new CommentResponseDTO
             {
+                id = this.Id,
                 text = this.Text,
                 creationDate = this.CreationDate,
                 editedDate = this.EditedDate
