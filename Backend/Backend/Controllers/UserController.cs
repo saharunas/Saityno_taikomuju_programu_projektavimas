@@ -275,6 +275,27 @@ namespace Backend.Controllers
             return Ok($"User {id} blocked successfully");
         }
 
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var user = await _context.App_User.FindAsync(long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)));
+
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            var responseDTO = new UserRoleDTO(
+                role: HttpContext.User.IsInRole("Admin") ? "Admin" : "Member",
+                id: user.Id.ToString()
+            );
+
+            return Ok(responseDTO);
+        }
+
         public record SuccessfulLoginDTO(string AccessToken);
+
+        public record UserRoleDTO(string role, string id);
     }
 }
