@@ -24,7 +24,7 @@ namespace Backend.Entities
                 name = this.Name,
                 description = this.Description,
                 creationDate = this.CreationDate,
-                AuthorUsername = this.User.UserName,
+                AuthorUsername = this.User?.UserName,
                 userId = this.UserId
             };
         }

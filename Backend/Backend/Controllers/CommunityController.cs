@@ -27,7 +27,7 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Community>>> GetCommunities()
         {
-            var communityList = await _context.Community.ToListAsync();
+            var communityList = await _context.Community.Include(c => c.User).ToListAsync();
             if (communityList == null || communityList.Count == 0)
             {
                 return NotFound("No communities found.");
@@ -43,10 +43,15 @@ namespace Backend.Controllers
         public async Task<ActionResult<Community>> GetCommunity(long id)
         {
             var community = await _context.Community.FindAsync(id);
+            
             if (community == null)
             {
                 return NotFound($"Community with ID {id} not found.");
             }
+
+            await _context.Entry(community)
+                .Reference(c => c.User)
+                .LoadAsync();
 
             var responseDTO = community.toDto();
 

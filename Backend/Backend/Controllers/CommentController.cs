@@ -3,6 +3,7 @@ using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -26,7 +27,7 @@ namespace Backend.Controllers
         [HttpGet("post/{post_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetPostCommentList(long post_id)
         {
-            var commentList = await _context.Comment.Where(p => p.PostId == post_id).ToListAsync();
+            var commentList = await _context.Comment.Where(p => p.PostId == post_id).Include(c => c.User).ToListAsync();
             if (commentList == null || commentList.Count == 0)
             {
                 return NotFound($"No comments found in post with ID {post_id}.");
@@ -46,6 +47,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"Comment with ID {id} not found.");
             }
+
+            await _context.Entry(comment)
+                .Reference(c => c.User)
+                .LoadAsync();
 
             var responseDTO = comment.toDto();
 

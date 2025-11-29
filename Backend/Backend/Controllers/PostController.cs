@@ -26,7 +26,7 @@ namespace Backend.Controllers
         [HttpGet("community/{comm_id}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetCommunityPosts(long comm_id)
         {
-            var postList = await _context.Post.Where(p => p.CommunityId == comm_id).ToListAsync();
+            var postList = await _context.Post.Where(p => p.CommunityId == comm_id).Include(c => c.User).ToListAsync();
             if (postList == null || postList.Count == 0)
             {
                 return NotFound($"No posts found in community with ID {comm_id}.");
@@ -46,6 +46,10 @@ namespace Backend.Controllers
             {
                 return NotFound($"Post with ID {id} not found.");
             }
+
+            await _context.Entry(post)
+                .Reference(c => c.User)
+                .LoadAsync();
 
             var responseDTO = post.toDto();
 
