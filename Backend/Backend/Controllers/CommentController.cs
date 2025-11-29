@@ -70,11 +70,18 @@ namespace Backend.Controllers
                 return NotFound($"Post with ID {dto.post_id} not found.");
             }
 
+            var user = await _context.Users.FindAsync(long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)));
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
             Comment comment = new Comment
             {
                 Text = dto.text,
-                UserId = long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)),
-                PostId = dto.post_id
+                UserId = user.Id,
+                PostId = dto.post_id,
+                User = user                
             };
 
             comment.CreationDate = DateTime.UtcNow;

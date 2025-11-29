@@ -19,5 +19,7 @@
         public string title { get; set; } = null!;
         public string text { get; set; } = null!;
         public DateTime creationDate { get; set; } = DateTime.Now;
+        public string AuthorUsername { get; set; } = null!;
+        public long userId { get; set; }
     }
 }

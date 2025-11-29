@@ -66,11 +66,18 @@ namespace Backend.Controllers
                 return UnprocessableEntity("Invalid community data.");
             }
 
+            var user = await _context.Users.FindAsync(long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)));
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
             Community community = new Community
             {
                 Name = communityDto.name,
                 Description = communityDto.description,
-                UserId = long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub))
+                UserId = user.Id,
+                User = user
             };
 
             community.CreationDate = DateTime.UtcNow;

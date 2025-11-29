@@ -70,12 +70,19 @@ namespace Backend.Controllers
                 return NotFound($"Community with ID {dto.community_id} not found.");
             }
 
+            var user = await _context.Users.FindAsync(long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)));
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
             Post post = new Post
             {
                 Title = dto.title,
                 Text = dto.text,
-                UserId = long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)),
-                CommunityId = dto.community_id
+                UserId = user.Id,
+                CommunityId = dto.community_id,
+                User = user
             };
 
             post.CreationDate = DateTime.UtcNow;
