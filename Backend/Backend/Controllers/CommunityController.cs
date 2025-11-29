@@ -33,7 +33,10 @@ namespace Backend.Controllers
                 return NotFound("No communities found.");
             }
 
-            var responseDTO = communityList.Select(c => c.toDto()).ToList();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = communityList.Select(c => c.toDto(long.Parse(userId), isAdmin)).ToList();
 
             return Ok(responseDTO);
         }
@@ -53,7 +56,10 @@ namespace Backend.Controllers
                 .Reference(c => c.User)
                 .LoadAsync();
 
-            var responseDTO = community.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = community.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }
@@ -90,7 +96,10 @@ namespace Backend.Controllers
             _context.Community.Add(community);
             await _context.SaveChangesAsync();
 
-            var responseDTO = community.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = community.toDto(long.Parse(userId), isAdmin);
 
             return CreatedAtAction(nameof(GetCommunity), new { id = community }, responseDTO);
         }
@@ -130,7 +139,14 @@ namespace Backend.Controllers
             _context.Community.Update(community);
             await _context.SaveChangesAsync();
 
-            var responseDTO = community.toDto();
+            await _context.Entry(community)
+                .Reference(c => c.User)
+                .LoadAsync();
+
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = community.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }
@@ -166,12 +182,18 @@ namespace Backend.Controllers
 
             var comments = await _context.Comment
                 .Where(c => posts.Contains(c.PostId))
+                .Include(c => c.User)
                 .ToListAsync();
             if (comments == null || comments.Count == 0)
             {
                 return NotFound($"No comments found for community ID {community_id}.");
             }
-            return Ok(comments);
+
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = comments.Select(c => c.toDto(long.Parse(userId), isAdmin)).ToList();
+            return Ok(responseDTO);
         }
     }
 }

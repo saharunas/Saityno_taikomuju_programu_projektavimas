@@ -32,7 +32,10 @@ namespace Backend.Controllers
                 return NotFound($"No posts found in community with ID {comm_id}.");
             }
 
-            var responseDTO = postList.Select(p => p.toDto()).ToList();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = postList.Select(p => p.toDto(long.Parse(userId), isAdmin)).ToList();
 
             return Ok(responseDTO);
         }
@@ -51,7 +54,10 @@ namespace Backend.Controllers
                 .Reference(c => c.User)
                 .LoadAsync();
 
-            var responseDTO = post.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = post.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }
@@ -94,7 +100,10 @@ namespace Backend.Controllers
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
 
-            var responseDTO = post.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = post.toDto(long.Parse(userId), isAdmin);
 
             return CreatedAtAction(nameof(GetPost), new { id = post }, responseDTO);
         }
@@ -134,7 +143,14 @@ namespace Backend.Controllers
             _context.Post.Update(post);
             await _context.SaveChangesAsync();
 
-            var responseDTO = post.toDto();
+            await _context.Entry(post)
+                .Reference(c => c.User)
+                .LoadAsync();
+
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = post.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }

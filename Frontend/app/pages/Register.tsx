@@ -1,10 +1,20 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { api, setAccessToken } from "../api";
 import { useRouter } from "expo-router";
+import Toolbar from "@/app/components/Toolbar";
+import { layout } from "../styles/layout";
+import { typography } from "../styles/typography";
 
-export default function RegisterScreen() {
+export default function Register() {
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [username, setUsername] = useState("");
@@ -25,7 +35,7 @@ export default function RegisterScreen() {
         password,
       });
 
-      router.navigate("/login");
+      router.navigate("/pages/Login");
     } catch (err: any) {
       console.log(err.response?.data || err.message);
       Alert.alert("Register failed", "Check your credentials");
@@ -35,32 +45,32 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
+    <View style={layout.loginContainer}>
+      <Text style={typography.title}>Register</Text>
 
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Name"
         autoCapitalize="none"
         value={name}
         onChangeText={setName}
       />
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Surname"
         autoCapitalize="none"
         value={surname}
         onChangeText={setSurname}
       />
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Username"
         autoCapitalize="none"
         value={username}
         onChangeText={setUsername}
       />
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Email"
         autoCapitalize="none"
         textContentType="emailAddress"
@@ -68,34 +78,18 @@ export default function RegisterScreen() {
         onChangeText={setEmail}
       />
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      <Button title={loading ? "Logging in..." : "Register"} onPress={handleRegister} />
+      <TouchableOpacity style={layout.loginButton} onPress={handleRegister}>
+        <Text style={layout.buttonText}>
+          {loading ? "Registering..." : "Register"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-});

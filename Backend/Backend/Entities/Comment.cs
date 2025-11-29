@@ -17,7 +17,7 @@ namespace Backend.Entities
         public long PostId { get; set; }
         public Post Post { get; set; } = null!;
 
-        public CommentResponseDTO toDto()
+        public CommentResponseDTO toDto(long? currentUserId, bool isAdmin = false)
         {
             return new CommentResponseDTO
             {
@@ -25,8 +25,9 @@ namespace Backend.Entities
                 text = this.Text,
                 creationDate = this.CreationDate,
                 editedDate = this.EditedDate,
-                AuthorUsername = this.User?.UserName,
-                userId = this.UserId
+                authorUsername = this.User?.UserName,
+                userId = this.UserId,
+                canEdit = isAdmin || UserId == currentUserId
             };
         }
     }

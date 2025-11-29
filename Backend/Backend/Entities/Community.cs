@@ -16,7 +16,7 @@ namespace Backend.Entities
 
         public ICollection<Post> Posts { get; set; } = new List<Post>();
 
-        public CommunityResponseDTO toDto()
+        public CommunityResponseDTO toDto(long? currentUserId, bool isAdmin = false)
         {
             return new CommunityResponseDTO
             {
@@ -24,8 +24,9 @@ namespace Backend.Entities
                 name = this.Name,
                 description = this.Description,
                 creationDate = this.CreationDate,
-                AuthorUsername = this.User?.UserName,
-                userId = this.UserId
+                authorUsername = this.User?.UserName,
+                userId = this.UserId,
+                canEdit = isAdmin || UserId == currentUserId
             };
         }
     }

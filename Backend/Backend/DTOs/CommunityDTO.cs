@@ -12,7 +12,8 @@
         public string name { get; set; } = null!;
         public string description { get; set; } = null!;
         public DateTime creationDate { get; set; } = DateTime.Now;
-        public string AuthorUsername { get; set; } = null!;
+        public string authorUsername { get; set; } = null!;
         public long userId { get; set; }
+        public bool canEdit { get; set; }
     }
 }

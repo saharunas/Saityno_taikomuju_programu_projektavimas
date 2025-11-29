@@ -20,7 +20,7 @@ namespace Backend.Entities
 
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
-        public PostResponseDTO toDto()
+        public PostResponseDTO toDto(long? currentUserId, bool isAdmin = false)
         {
             return new PostResponseDTO
             {
@@ -28,8 +28,9 @@ namespace Backend.Entities
                 title = this.Title,
                 text = this.Text,
                 creationDate = this.CreationDate,
-                AuthorUsername = this.User?.UserName,
-                userId = this.UserId
+                authorUsername = this.User?.UserName,
+                userId = this.UserId,
+                canEdit = isAdmin || UserId == currentUserId
             };
         }
     }

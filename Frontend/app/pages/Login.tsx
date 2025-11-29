@@ -1,10 +1,19 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { api, setAccessToken } from "../api";
 import { useRouter } from "expo-router";
+import { layout } from "../styles/layout";
+import { typography } from "../styles/typography";
 
-export default function LoginScreen() {
+export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +38,7 @@ export default function LoginScreen() {
 
       // Store token in memory (for now)
       setAccessToken(token);
-      router.navigate("/home");
+      router.navigate("/pages/Home");
     } catch (err: any) {
       console.log(err.response?.data || err.message);
       Alert.alert("Login failed", "Check your credentials");
@@ -39,11 +48,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <View style={layout.loginContainer}>
+      <Text style={typography.title}>Login</Text>
 
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Username"
         autoCapitalize="none"
         value={username}
@@ -51,34 +60,24 @@ export default function LoginScreen() {
       />
 
       <TextInput
-        style={styles.input}
+        style={layout.input}
         placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      <Button title={loading ? "Logging in..." : "Login"} onPress={handleLogin} />
+      <TouchableOpacity style={layout.loginButton} onPress={handleLogin}>
+        <Text style={layout.buttonText}>
+          {loading ? "Logging in..." : "Login"}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={layout.loginButton}
+        onPress={() => router.navigate("/pages/Register")}
+      >
+        <Text style={layout.buttonText}>Register</Text>
+      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-});

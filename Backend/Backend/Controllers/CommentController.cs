@@ -33,7 +33,10 @@ namespace Backend.Controllers
                 return NotFound($"No comments found in post with ID {post_id}.");
             }
 
-            var responseDTO = commentList.Select(p => p.toDto()).ToList();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = commentList.Select(p => p.toDto(long.Parse(userId), isAdmin)).ToList();
 
             return Ok(responseDTO);
         }
@@ -52,7 +55,10 @@ namespace Backend.Controllers
                 .Reference(c => c.User)
                 .LoadAsync();
 
-            var responseDTO = comment.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = comment.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }
@@ -94,7 +100,10 @@ namespace Backend.Controllers
             _context.Comment.Add(comment);
             await _context.SaveChangesAsync();
 
-            var responseDTO = comment.toDto();
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = comment.toDto(long.Parse(userId), isAdmin);
 
             return CreatedAtAction(nameof(GetComment), new { id = comment }, responseDTO);
         }
@@ -134,7 +143,14 @@ namespace Backend.Controllers
             _context.Comment.Update(comment);
             await _context.SaveChangesAsync();
 
-            var responseDTO = comment.toDto();
+            await _context.Entry(comment)
+                .Reference(c => c.User)
+                .LoadAsync();
+
+            var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            bool isAdmin = HttpContext.User.IsInRole("Admin");
+
+            var responseDTO = comment.toDto(long.Parse(userId), isAdmin);
 
             return Ok(responseDTO);
         }

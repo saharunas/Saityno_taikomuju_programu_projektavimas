@@ -1,55 +1,64 @@
 import React, { useEffect, useState } from "react";
-import { Button, SafeAreaView } from "react-native";
-import LoginScreen from "../src/screens/Login";
-import HomeScreen from "../src/screens/Home";
-import RegisterScreen from "@/src/screens/Register";
-import { Link, useRouter } from "expo-router";
-import { api, getAccessToken, setAccessToken } from "@/src/api";
+import { Button, SafeAreaView, View, ActivityIndicator } from "react-native";
+import LoginScreen from "./pages/Login";
+import HomeScreen from "./pages/Home";
+import RegisterScreen from "@/app/pages/Register";
+import { Link } from "expo-router";
+import { api, getAccessToken, setAccessToken } from "@/app/api";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PaperProvider } from "react-native-paper";
 
 export default function Index() {
-  const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true); // 👈 NEW
 
   useEffect(() => {
-
-      const initAuth = async () => {
+    const initAuth = async () => {
       try {
-        const res = await api.post("/User/accessToken"); // or /auth/refresh
+        const res = await api.post("/User/accessToken");
         const token = res.data.token || res.data.accessToken;
-        console.log("Refreshed token:" + token)
+        console.log("Refreshed token:" + token);
+
         if (token) {
-          setAccessToken(token);
+          await setAccessToken(token);
           setLoggedIn(true);
+        } else {
+          await setAccessToken(null);
+          setLoggedIn(false);
         }
-      } catch {
-        // no valid refresh token, stay logged out
-        setAccessToken(null);
+      } catch (e) {
+        // no valid refresh token or error
+        await setAccessToken(null);
         setLoggedIn(false);
+      } finally {
+        // ✅ now we know auth state for sure
+        setAuthChecking(false);
       }
     };
 
-      const fetchData = async () => {
-        console.log(api.defaults.headers.common["Authorization"]);
-        console.log(getAccessToken());
-      };
-  
-      initAuth();
-      fetchData();
-    }, []);
+    initAuth();
+  }, []);
+
+  if (authChecking) {
+    // 👇 Here you can show a splash or just a spinner
+    return (
+      <SafeAreaProvider style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-        {!loggedIn ? (
+    <PaperProvider>
+      {!loggedIn ? (
         <>
-          <LoginScreen/>
-            <Link href="/register" asChild>
-              <Button title="Go to Register" onPress={() => {}} />
-            </Link>
+          <LoginScreen />
         </>
-        ) : (
-          <HomeScreen/>
-        )}
-      )
-    </SafeAreaView>
+      ) : (
+        <HomeScreen />
+      )}
+    </PaperProvider>
   );
 }
