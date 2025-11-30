@@ -6,8 +6,8 @@ const ACCESS_TOKEN_KEY = "accessToken";
 const API_BASE_URL = "https://saitynai-vl9u5.ondigitalocean.app";
 
 export const api = axios.create({
-  //baseURL: API_BASE_URL,
-  baseURL: "https://localhost:7068",
+  baseURL: API_BASE_URL,
+  //baseURL: "https://localhost:7068",
   timeout: 10000,
   withCredentials: true,
 });

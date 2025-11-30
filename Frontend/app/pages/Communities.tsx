@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 import { CurrentUser } from "../types/CurrentUser";
 import { layout } from "../styles/layout";
 import { typography } from "../styles/typography";
+import Footer from "../components/Footer";
 
 export default function Communities() {
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -33,7 +34,6 @@ export default function Communities() {
 
   useEffect(() => {
     fetchAll();
-    fetchMe();
   }, []);
 
   const fetchAll = async () => {
@@ -45,15 +45,6 @@ export default function Communities() {
       Alert.alert("Error", "Failed to fetch communities");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchMe = async () => {
-    try {
-      const res = await api.get("/User/me");
-      setCurrentUser(res.data);
-    } catch (err: any) {
-      console.log(err.response?.data || err.message);
     }
   };
 
@@ -81,7 +72,7 @@ export default function Communities() {
 
   return (
     <View style={layout.container}>
-      <Toolbar title="Communities" showBack />
+      <Toolbar />
 
       <View style={layout.content}>
         {/* Create button */}
@@ -158,6 +149,7 @@ export default function Communities() {
         onUpdated={handleCommunityUpdated}
         onDeleted={handleCommunityDeleted}
       />
+      <Footer />
     </View>
   );
 }

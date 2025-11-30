@@ -16,6 +16,7 @@ import EditPostModal from "../components/EditPost";
 import { cards } from "../styles/components";
 import { layout } from "../styles/layout";
 import { typography } from "../styles/typography";
+import Footer from "../components/Footer";
 
 export default function Posts() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function Posts() {
 
   return (
     <View style={layout.container}>
-      <Toolbar title="Posts" showBack />
+      <Toolbar />
 
       <View style={layout.content}>
         {/* Create button */}
@@ -155,6 +156,7 @@ export default function Posts() {
         onUpdated={handlePostUpdated}
         onDeleted={handlePostDeleted}
       />
+      <Footer />
     </View>
   );
 }

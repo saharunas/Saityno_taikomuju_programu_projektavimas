@@ -14,14 +14,14 @@ import { cards } from "../styles/components";
 
 type CreateCommentModalProps = {
   visible: boolean;
-  postId: number;
+  post_id: number;
   onClose: () => void;
   onCreated: (comment: Comment) => void;
 };
 
 export default function CreateCommentModal({
   visible,
-  postId,
+  post_id,
   onClose,
   onCreated,
 }: CreateCommentModalProps) {
@@ -35,7 +35,7 @@ export default function CreateCommentModal({
     setLoading(true);
     try {
       const res = await api.post("/Comment", {
-        postId,
+        post_id,
         text,
       });
 

@@ -165,6 +165,11 @@ export const cards = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
   },
+  bold: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
   label: {
     fontSize: 14,
     marginBottom: 4,

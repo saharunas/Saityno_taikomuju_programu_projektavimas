@@ -15,6 +15,7 @@ import { layout } from "../styles/layout";
 import { cards } from "../styles/components";
 import { useLocalSearchParams } from "expo-router";
 import { typography } from "../styles/typography";
+import Footer from "../components/Footer";
 
 export default function Comments() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
@@ -68,7 +69,7 @@ export default function Comments() {
 
   return (
     <View style={layout.container}>
-      <Toolbar title="Comments" showBack />
+      <Toolbar />
 
       <View style={layout.content}>
         {/* Create button */}
@@ -118,7 +119,7 @@ export default function Comments() {
       {/* Create modal (does POST /Comment internally) */}
       <CreateCommentModal
         visible={createVisible}
-        postId={numericPostId} // 👈 rename from post_id to postId
+        post_id={numericPostId} // 👈 rename from post_id to postId
         onClose={() => setCreateVisible(false)}
         onCreated={handleCommentCreated}
       />
@@ -131,6 +132,7 @@ export default function Comments() {
         onUpdated={handleCommentUpdated}
         onDeleted={handleCommentDeleted}
       />
+      <Footer />
     </View>
   );
 }
