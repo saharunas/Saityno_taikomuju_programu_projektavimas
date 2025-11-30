@@ -28,7 +28,7 @@ builder.Services.AddCors(options =>
                     "http://localhost:8081",
                     "http://localhost:19006",
                     "http://127.0.0.1:8081",
-                    "https://sea-turtle-app-8k2xe.ondigitalocean.app"
+                    "https://saitynai-front-amczj.ondigitalocean.app"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
