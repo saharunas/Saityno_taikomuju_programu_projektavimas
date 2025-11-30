@@ -1,4 +1,4 @@
-using Backend.Entities;
+﻿using Backend.Entities;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -227,15 +227,28 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
         {
-            var users = await _context.App_User.ToListAsync();
+            var users = await _context.Users
+                .Select(u => new UserAdminResponseDTO
+                {
+                    id = u.Id,
+                    name = u.Name,
+                    surname = u.Surname,
+                    username = u.UserName,
+                    email = u.Email,
+                    role = (
+                        from ur in _context.UserRoles
+                        join r in _context.Roles on ur.RoleId equals r.Id
+                        where ur.UserId == u.Id
+                        select r.Name
+                    ).FirstOrDefault()
+                })
+                .ToListAsync();
             if (users == null || users.Count == 0)
             {
                 return NotFound("No users found.");
             }
 
-            var responseDTO = users.Select(u => u.toDto()).ToList();
-
-            return Ok(responseDTO);
+            return Ok(users);
         }
 
         [Authorize(Roles = "Member, Admin")]

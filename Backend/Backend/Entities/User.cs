@@ -24,5 +24,18 @@ namespace Backend.Entities
                 email = this.Email
             };
         }
+        public UserAdminResponseDTO toAdminDto(string _role)
+        {
+            return new UserAdminResponseDTO
+            {
+                id = this.Id,
+                name = this.Name,
+                surname = this.Surname,
+                username = this.UserName,
+                email = this.Email,
+                role = _role,
+                isBlocked = this.Blocked
+            };
+        }
     }
 }

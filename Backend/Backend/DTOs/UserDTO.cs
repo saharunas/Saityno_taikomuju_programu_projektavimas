@@ -22,4 +22,15 @@
         public string username { get; set; } = null!;
         public string email { get; set; } = null!;
     }
+
+    public record UserAdminResponseDTO
+    {
+        public long id { get; set; }
+        public string name { get; set; } = null!;
+        public string surname { get; set; } = null!;
+        public string username { get; set; } = null!;
+        public string email { get; set; } = null!;
+        public string role { get; set; } = null!;
+        public bool isBlocked { get; set; }
+    }
 }
