@@ -17,6 +17,7 @@ namespace Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole<long>> _roleManager;
         private readonly JwtTokenService _jwtTokenService;
         private readonly SessionService _sessionService;
         private readonly ValidationService _validationService;
@@ -26,13 +27,15 @@ namespace Backend.Controllers
             UserManager<User> userManager,
             JwtTokenService jwtTokenService,
             SessionService sessionService,
-            ValidationService validationService)
+            ValidationService validationService,
+            RoleManager<IdentityRole<long>> roleManager)
         {
             _context = context;
             _userManager = userManager;
             _jwtTokenService = jwtTokenService;
             _sessionService = sessionService;
             _validationService = validationService;
+            _roleManager = roleManager;
         }
 
 
@@ -235,6 +238,7 @@ namespace Backend.Controllers
                     surname = u.Surname,
                     username = u.UserName,
                     email = u.Email,
+                    isBlocked = u.Blocked,
                     role = (
                         from ur in _context.UserRoles
                         join r in _context.Roles on ur.RoleId equals r.Id
@@ -288,6 +292,49 @@ namespace Backend.Controllers
             return Ok($"User {id} blocked successfully");
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("role")]
+        public async Task<IActionResult> ChangeUserRole([FromBody] ChangeUserRoleDTO _user)
+        {
+            if (!await _validationService.UserExists(_user.id))
+            {
+                return NotFound($"User with ID {_user.id} not found.");
+            }
+
+            var user = await _context.App_User.FindAsync(_user.id);
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to remove user roles.");
+            }
+            var addResult = await _userManager.AddToRoleAsync(user, _user.newRole);
+            if (!addResult.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to add new role to user.");
+            }
+            return Ok($"User {_user.id} role changed to {_user.newRole} successfully");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("role")]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = await _roleManager.Roles
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Name,
+                    r.NormalizedName
+                })
+                .ToListAsync();
+
+            if (!roles.Any())
+                return NotFound("No roles found.");
+
+            return Ok(roles);
+        }
+
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetMe()
@@ -310,5 +357,6 @@ namespace Backend.Controllers
         public record SuccessfulLoginDTO(string AccessToken);
 
         public record UserRoleDTO(string role, string id);
+        public record ChangeUserRoleDTO(long id, string newRole);
     }
 }

@@ -7,7 +7,7 @@ namespace Backend.Services
     {
         public static async Task SeedIdentityData(UserManager<User> userManager, RoleManager<IdentityRole<long>> roleManager)
         {
-            string[] roles = { "Admin", "Member", "Guest" };
+            string[] roles = { "Admin", "Member" };
 
             foreach (var role in roles)
             {

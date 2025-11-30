@@ -23,7 +23,6 @@ namespace Backend.Controllers
             _validationService = validationService;
         }
 
-        [Authorize(Roles = "Guest,Member,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Community>>> GetCommunities()
         {
@@ -36,12 +35,16 @@ namespace Backend.Controllers
             var userId = HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             bool isAdmin = HttpContext.User.IsInRole("Admin");
 
+            if (string.IsNullOrEmpty(userId))
+            {
+                userId = "-1";
+            }
+
             var responseDTO = communityList.Select(c => c.toDto(long.Parse(userId), isAdmin)).ToList();
 
             return Ok(responseDTO);
         }
 
-        [Authorize(Roles = "Guest,Member,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Community>> GetCommunity(long id)
         {
