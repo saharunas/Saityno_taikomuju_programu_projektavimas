@@ -24,7 +24,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpGet("community/{comm_id}")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetCommunityPosts(long comm_id)
+        public async Task<ActionResult<IEnumerable<PostResponseDTO>>> GetCommunityPosts(long comm_id)
         {
             var postList = await _context.Post.Where(p => p.CommunityId == comm_id).Include(c => c.User).ToListAsync();
             if (postList == null || postList.Count == 0)
@@ -42,7 +42,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Post>> GetPost(long id)
+        public async Task<ActionResult<PostResponseDTO>> GetPost(long id)
         {
             var post = await _context.Post.FindAsync(id);
             if (post == null)
@@ -64,7 +64,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPost]
-        public async Task<IActionResult> CreatePost([FromBody] PostCreateDTO dto)
+        public async Task<ActionResult<PostResponseDTO>> CreatePost([FromBody] PostCreateDTO dto)
         {
             if (!_validationService.ValidatePostDTO(dto))
             {
@@ -110,7 +110,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePost([FromBody] PostUpdateDTO dto, long id)
+        public async Task<ActionResult<PostResponseDTO>> UpdatePost([FromBody] PostUpdateDTO dto, long id)
         {
             if (!_validationService.ValidatePostDTO(dto))
             {

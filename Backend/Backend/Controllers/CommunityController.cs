@@ -24,7 +24,7 @@ namespace Backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Community>>> GetCommunities()
+        public async Task<ActionResult<IEnumerable<CommunityResponseDTO>>> GetCommunities()
         {
             var communityList = await _context.Community.Include(c => c.User).ToListAsync();
             if (communityList == null || communityList.Count == 0)
@@ -46,7 +46,7 @@ namespace Backend.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Community>> GetCommunity(long id)
+        public async Task<ActionResult<CommunityResponseDTO>> GetCommunity(long id)
         {
             var community = await _context.Community.FindAsync(id);
             
@@ -69,7 +69,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPost]
-        public async Task<IActionResult> CreateCommunity([FromBody] CommunityDTO communityDto)
+        public async Task<ActionResult<CommunityResponseDTO>> CreateCommunity([FromBody] CommunityDTO communityDto)
         {
             if (!_validationService.ValidateCommunityDTO(communityDto))
             {
@@ -109,7 +109,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCommunity([FromBody] CommunityDTO communityDto, long id)
+        public async Task<ActionResult<CommunityResponseDTO>> UpdateCommunity([FromBody] CommunityDTO communityDto, long id)
         {
             if (!_validationService.ValidateCommunityDTO(communityDto))
             {
@@ -173,7 +173,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet("{community_id}/posts/comments")]
-        public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsByCommunityId(long community_id)
+        public async Task<ActionResult<IEnumerable<CommentResponseDTO>>> GetCommentsByCommunityId(long community_id)
         {
             var posts = await _context.Post.Where(p => p.CommunityId == community_id)
                 .Select(p => p.Id)

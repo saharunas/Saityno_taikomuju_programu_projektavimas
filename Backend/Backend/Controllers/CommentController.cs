@@ -25,7 +25,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpGet("post/{post_id}")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPostCommentList(long post_id)
+        public async Task<ActionResult<IEnumerable<CommentResponseDTO>>> GetPostCommentList(long post_id)
         {
             var commentList = await _context.Comment.Where(p => p.PostId == post_id).Include(c => c.User).ToListAsync();
             if (commentList == null || commentList.Count == 0)
@@ -43,7 +43,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Post>> GetComment(long id)
+        public async Task<ActionResult<CommentResponseDTO>> GetComment(long id)
         {
             var comment = await _context.Comment.FindAsync(id);
             if (comment == null)
@@ -65,7 +65,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPost]
-        public async Task<IActionResult> CreateComment([FromBody] CommentCreateDTO dto)
+        public async Task<ActionResult<CommentResponseDTO>> CreateComment([FromBody] CommentCreateDTO dto)
         {
             if (!_validationService.ValidateCommentDTO(dto))
             {
@@ -110,7 +110,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member,Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateComment([FromBody] CommentUpdateDTO dto, long id)
+        public async Task<ActionResult<CommentResponseDTO>> UpdateComment([FromBody] CommentUpdateDTO dto, long id)
         {
             if (!_validationService.ValidateCommentDTO(dto))
             {

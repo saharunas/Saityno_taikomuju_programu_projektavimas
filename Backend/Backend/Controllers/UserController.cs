@@ -96,7 +96,7 @@ namespace Backend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> loginUser([FromBody] UserLoginDTO dto)
+        public async Task<ActionResult<SuccessfulLoginDTO>> loginUser([FromBody] UserLoginDTO dto)
         {
             var checkUser = await _userManager.FindByNameAsync(dto.username);
             if (checkUser == null)
@@ -228,7 +228,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserAdminResponseDTO>>> GetAllUsers()
         {
             var users = await _context.Users
                 .Select(u => new UserAdminResponseDTO
@@ -257,7 +257,7 @@ namespace Backend.Controllers
 
         [Authorize(Roles = "Member, Admin")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<User>>> GetUser(long id)
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetUser(long id)
         {
             var user = await _context.App_User.FindAsync(id);
             if (user == null)
@@ -337,7 +337,7 @@ namespace Backend.Controllers
 
         [Authorize]
         [HttpGet("me")]
-        public async Task<IActionResult> GetMe()
+        public async Task<ActionResult<UserRoleDTO>> GetMe()
         {
             var user = await _context.App_User.FindAsync(long.Parse(HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub)));
 

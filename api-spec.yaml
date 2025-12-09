@@ -1,0 +1,824 @@
+openapi: 3.0.3
+info:
+  title: Saitynai API
+  version: 1.0.0
+  description: |
+    REST API for "Saitynai" community platform.
+    Supports user registration, authentication, communities, posts, comments and admin operations (roles, blocking users).
+
+servers:
+  - url: https://saitynai-vl9u5.ondigitalocean.app/
+    description: Production (DigitalOcean)
+  - url: http://localhost:5000
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Roles
+  - name: Communities
+  - name: Posts
+  - name: Comments
+
+paths:
+  # ---------------- AUTH / USERS ----------------
+
+  /User/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterDTO"
+            example:
+              username: "jonas"
+              email: "jonas@example.com"
+              password: "Jonas123!"
+              name: "Jonas"
+              surname: "Jonaitis"
+      responses:
+        "201":
+          description: User created successfully
+        "400":
+          description: Invalid user data (null or bad format)
+        "409":
+          description: Username or email already exists
+        "422":
+          description: Validation failed
+
+  /User/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginDTO"
+            example:
+              username: "admin"
+              password: "Admin123!"
+      responses:
+        "200":
+          description: Login successful, returns access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessfulLoginDTO"
+              example:
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "422":
+          description: User does not exist / invalid credentials / invalid data
+
+  /User/accessToken:
+    post:
+      tags: [Auth]
+      summary: Get new access token using refresh token cookie
+      description: |
+        Reads refresh token from cookie "RefreshToken",
+        validates it and returns a new access token and refresh token.
+      responses:
+        "200":
+          description: New access token created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessfulLoginDTO"
+              example:
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "401":
+          description: Refresh token missing or invalid
+        "422":
+          description: User not found
+
+  /User/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      description: Invalidates session and deletes refresh token cookie.
+      responses:
+        "200":
+          description: Logout successful
+        "401":
+          description: Refresh token missing or invalid
+
+  /User/me:
+    get:
+      tags: [Auth]
+      summary: Get current user role and ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user role and id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRoleDTO"
+              example:
+                role: "Admin"
+                id: "1"
+        "404":
+          description: User not found
+
+  /User:
+    get:
+      tags: [Users]
+      summary: Get all users (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAdminResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not Admin)
+        "404":
+          description: No users found
+
+  /User/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID (self or Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (trying to access another user and not Admin)
+        "404":
+          description: User not found
+
+  /User/block/{id}:
+    post:
+      tags: [Users]
+      summary: Block user (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User blocked successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "User 2 blocked successfully"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not Admin)
+        "404":
+          description: User not found
+
+  /User/role:
+    get:
+      tags: [Roles]
+      summary: Get all available roles (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not Admin)
+        "404":
+          description: No roles found
+    post:
+      tags: [Roles]
+      summary: Change user role (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUserRoleDTO"
+            example:
+              id: 2
+              newRole: "Admin"
+      responses:
+        "200":
+          description: Role changed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "User 2 role changed to Admin successfully"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not Admin)
+        "404":
+          description: User not found
+        "500":
+          description: Failed to remove or add user role
+
+  # ---------------- COMMUNITIES ----------------
+
+  /Community:
+    get:
+      tags: [Communities]
+      summary: Get all communities
+      responses:
+        "200":
+          description: List of communities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityResponseDTO"
+        "404":
+          description: No communities found
+    post:
+      tags: [Communities]
+      summary: Create community
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityDTO"
+            example:
+              name: "Programming"
+              description: "All about programming"
+      responses:
+        "201":
+          description: Community created
+        "400":
+          description: Invalid community data
+        "401":
+          description: Not authenticated
+        "422":
+          description: Validation failed
+        "404":
+          description: User not found
+
+  /Community/{id}:
+    get:
+      tags: [Communities]
+      summary: Get community by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Community data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityResponseDTO"
+        "404":
+          description: Community not found
+    put:
+      tags: [Communities]
+      summary: Update community
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityDTO"
+      responses:
+        "200":
+          description: Updated community
+        "400":
+          description: Invalid community data or ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Community not found
+        "422":
+          description: Validation failed
+    delete:
+      tags: [Communities]
+      summary: Delete community
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Community deleted
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Community not found
+
+  /Community/{community_id}/posts/comments:
+    get:
+      tags: [Comments]
+      summary: Get all comments for all posts in a community (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: community_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommentResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not Admin)
+        "404":
+          description: No posts or no comments found for given community
+
+  # ---------------- POSTS ----------------
+
+  /Post/community/{comm_id}:
+    get:
+      tags: [Posts]
+      summary: Get posts for a community
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comm_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of posts in community
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: No posts found in community
+
+  /Post/{id}:
+    get:
+      tags: [Posts]
+      summary: Get post by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: Post not found
+    put:
+      tags: [Posts]
+      summary: Update post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostUpdateDTO"
+      responses:
+        "200":
+          description: Updated post
+        "400":
+          description: Invalid post data or ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Post not found
+        "422":
+          description: Validation failed
+    delete:
+      tags: [Posts]
+      summary: Delete post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Post deleted
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Post not found
+
+  /Post:
+    post:
+      tags: [Posts]
+      summary: Create a new post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostCreateDTO"
+            example:
+              title: "First post"
+              text: "Hello world"
+              community_id: 1
+      responses:
+        "201":
+          description: Post created
+        "400":
+          description: Invalid post data
+        "401":
+          description: Not authenticated
+        "404":
+          description: Community or user not found
+        "422":
+          description: Validation failed
+
+  # ---------------- COMMENTS ----------------
+
+  /Comment/post/{post_id}:
+    get:
+      tags: [Comments]
+      summary: Get comments for a post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommentResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: No comments found for post
+
+  /Comment/{id}:
+    get:
+      tags: [Comments]
+      summary: Get single comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentResponseDTO"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: Comment not found
+    put:
+      tags: [Comments]
+      summary: Update comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdateDTO"
+      responses:
+        "200":
+          description: Updated comment
+        "400":
+          description: Invalid comment data or ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Comment not found
+        "422":
+          description: Validation failed
+    delete:
+      tags: [Comments]
+      summary: Delete comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Comment deleted
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden (not author or not Admin)
+        "404":
+          description: Comment not found
+
+  /Comment:
+    post:
+      tags: [Comments]
+      summary: Create comment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreateDTO"
+            example:
+              text: "Nice post!"
+              post_id: 10
+      responses:
+        "201":
+          description: Comment created
+        "400":
+          description: Invalid comment data
+        "401":
+          description: Not authenticated
+        "404":
+          description: Post or user not found
+        "422":
+          description: Validation failed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegisterDTO:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+
+    UserLoginDTO:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    SuccessfulLoginDTO:
+      type: object
+      properties:
+        accessToken:
+          type: string
+
+    UserRoleDTO:
+      type: object
+      properties:
+        role:
+          type: string
+          description: "Admin or Member"
+        id:
+          type: string
+
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        surname:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        isBlocked:
+          type: boolean
+        role:
+          type: string
+
+    UserAdminResponseDTO:
+      allOf:
+        - $ref: "#/components/schemas/UserDto"
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        normalizedName:
+          type: string
+
+    ChangeUserRoleDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        newRole:
+          type: string
+
+    CommunityDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    CommunityResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        userId:
+          type: integer
+
+    PostCreateDTO:
+      type: object
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+        community_id:
+          type: integer
+
+    PostUpdateDTO:
+      type: object
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+
+    PostResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        text:
+          type: string
+        communityId:
+          type: integer
+        userId:
+          type: integer
+
+    CommentCreateDTO:
+      type: object
+      properties:
+        text:
+          type: string
+        post_id:
+          type: integer
+
+    CommentUpdateDTO:
+      type: object
+      properties:
+        text:
+          type: string
+
+    CommentResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+        postId:
+          type: integer
+        userId:
+          type: integer
